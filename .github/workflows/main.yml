@@ -1,0 +1,33 @@
+name: Fetch MrBeast Subs
+
+on:
+  schedule:
+    - cron: "*/5 * * * *" # toutes les 5 minutes
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fetch_subs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.MY_PERSONAL_TOKEN }}
+
+      - name: Fetch subscriber count
+        run: |
+          curl -s https://backend.mixerno.space/api/youtube/estv3/UCX6OQ3DkcsbYNE6H8uQQuVA \
+          | jq '{subscriberCount: .items[0].statistics.subscriberCount}' > mrbeast.json
+
+      - name: Commit and push
+        run: |
+          git config user.name "GraphStats"
+          git config user.email "189259481+GraphStats@users.noreply.github.com"
+          git add mrbeast.json
+          git commit -m "Update subscriber count [skip ci]" || echo "No changes to commit"
+          git push origin HEAD:main
+        env:
+          GITHUB_TOKEN: ${{ secrets.MY_PERSONAL_TOKEN }}
